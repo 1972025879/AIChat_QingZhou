@@ -1,0 +1,48 @@
+### Model
+model_name_or_path: /home/4T/wuhao_zjc/ab_new_document/AIChat_QingZhou/LLaMA-Factory/models/qwen/Qwen1.5-7B-Chat
+template: qwen
+
+### Dataset
+dataset: wechat_qingzhou
+dataset_dir: data
+val_size: 0.05
+max_samples: 10000000
+overwrite_cache: true
+preprocessing_num_workers: 16
+cutoff_len: 1024
+
+### Training Stage
+stage: sft
+do_train: true
+finetuning_type: lora
+
+### LoRA
+lora_rank: 32
+lora_alpha: 64
+lora_dropout: 0.05
+lora_target: q_proj,v_proj,k_proj,o_proj,gate_proj,up_proj,down_proj  # 等价于 all，但更明确
+
+### Batch & Optimizer
+per_device_train_batch_size: 2
+per_device_eval_batch_size: 1
+gradient_accumulation_steps: 8
+learning_rate: 5e-5
+num_train_epochs: 3
+lr_scheduler_type: cosine
+warmup_ratio: 0.1  # 或用 warmup_steps: 100
+
+### Precision (V100 不支持 bf16!)
+fp16: true
+bf16: false
+
+### Logging & Saving
+logging_steps: 10
+save_steps: 500
+eval_steps: 500
+load_best_model_at_end: false  # LoRA 通常不加载 best，因 eval 指标可能不准
+plot_loss: true
+overwrite_output_dir: true
+
+### Output
+output_dir: saves/qwen1_5_7b_lora_qingzhou
+logging_dir: logs/qwen1_5_7b_lora_qingzhou

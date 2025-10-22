@@ -1,147 +1,236 @@
-太好了！你已经完成了**最关键的一步：数据清洗**，得到了干净的对话对（如 `other_to_you.jsonl` 和 `you_to_other.jsonl`）。
+# QuickStart for LLaMA
 
-接下来，基于你 **拥有 2 张 V100（60GB 显存） + Linux 服务器 + 接受本地部署** 的条件，整个训练 AI 聊天机器人的流程可以分为以下 **5 个清晰阶段**：
-
----
-
-### 🧩 阶段 1：选择基础模型（Backbone）
-> 目标：选一个适合中文、支持对话、能在你硬件上微调的开源模型。
-
-✅ **推荐选项（任选其一）**：
-| 模型 | 优点 | 显存需求（微调） |
-|------|------|----------------|
-| **Qwen1.5-7B-Chat** | 中文极强、阿里开源、对话优化 | LoRA: ~20GB；全参: ~50GB |
-| **Llama-3-8B-Instruct** | 多语言强、生态好、推理快 | LoRA: ~24GB |
-| **ChatGLM3-6B** | 国产、轻量、支持工具调用 | LoRA: ~16GB |
-
-> 💡 建议：**优先选 `Qwen1.5-7B-Chat`**，它对中文聊天场景优化最好。
+llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
+llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
+llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 
 ---
 
-### 🛠 阶段 2：准备训练环境 & 数据格式
-> 目标：把清洗好的 JSONL 转成训练框架能读的格式。
-
-#### 步骤：
-1. **安装训练框架**（推荐 [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory)）：
-   ```bash
-   git clone https://github.com/hiyouga/LLaMA-Factory.git
-   cd LLaMA-Factory && pip install -r requirements.txt
-   ```
-2. **下载基础模型**（以 Qwen 为例）：
-   ```bash
-   huggingface-cli download Qwen/Qwen1.5-7B-Chat --local-dir ./models/Qwen1.5-7B-Chat
-   ```
-3. **注册你的数据集**（创建 `data/my_chat.yaml`）：
-   ```yaml
-   file_name: /path/to/other_to_you.jsonl
-   format: alpaca  # 或 sharegpt
-   ```
-   > LLaMA-Factory 原生支持 `{"input": "...", "output": "..."}` 格式，你现在的数据可直接用！
+### ✅ 前提确认
+- 你已清洗出 `other_to_you.jsonl`，格式为：
+  ```json
+  {"input": "对方消息", "output": "你的回复"}
+  ```
+- 服务器：2×V100（32GB/卡，共64GB），Linux，支持 `bf16`
+- 网络：国内，优先使用 **ModelScope**（而非 Hugging Face）
 
 ---
 
-### 🔥 阶段 3：微调模型（Fine-tuning）
-> 目标：让模型学会“像你一样回复对方”。
+## 🧩 阶段 1：选择基础模型（Backbone）
 
-#### 推荐方式：**LoRA 微调**（高效、省显存、效果好）
-- 只训练少量适配层，冻结主干模型
-- 2×V100 轻松跑 7B 模型
+✅ **推荐**：`Qwen/Qwen1.5-7B-Chat`（中文对话最强，ModelScope 官方支持）
 
-#### 配置示例（`train_lora.yaml`）：
+> ModelScope 模型 ID：`qwen/Qwen1.5-7B-Chat`
+
+---
+
+## 🛠 阶段 2：准备环境 & 数据格式
+
+### 1. 安装 LLaMA-Factory（启用 ModelScope 支持）
+```bash
+git clone https://github.com/hiyouga/LLaMA-Factory.git
+cd LLaMA-Factory
+pip install -e ".[torch,metrics]" --no-build-isolation
+```
+
+### 2. 启用 ModelScope Hub（国内加速）
+```bash
+export USE_MODELSCOPE_HUB=1
+```
+
+> 此后所有 `model_name_or_path` 可直接使用 ModelScope ID，如 `qwen/Qwen1.5-7B-Chat`
+
+### 3. 注册你的私有数据集
+
+#### (1) 将数据放入目录（例如）：
+```bash
+mkdir -p data/my_chat/
+cp /your/path/other_to_you.jsonl data/my_chat/
+```
+
+#### (2) 编辑 `data/dataset_info.json`，**新增条目**：
+```json
+{
+  "my_chat": {
+    "file_name": "my_chat/other_to_you.jsonl",
+    "format": "alpaca"
+  }
+}
+```
+
+> ✅ 格式说明：`alpaca` 对应 `{"input": "...", "output": "..."}`，完全匹配你的数据。
+
+---
+
+## 🔥 阶段 3：LoRA 微调（使用 LLaMA-Factory 官方 CLI）
+
+### 1. 创建训练配置：`examples/train_lora/qwen1_5_7b_lora_sft.yaml`
+
 ```yaml
-model_name_or_path: ./models/Qwen1.5-7B-Chat
-dataset: my_chat
+model_name_or_path: qwen/Qwen1.5-7B-Chat
 template: qwen
 finetuning_type: lora
 lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target: all  # 或指定 q_proj,v_proj 等
+
+dataset: my_chat
+dataset_dir: data
+split: train
+max_samples: -1
+overwrite_cache: true
+
 per_device_train_batch_size: 4
 gradient_accumulation_steps: 2
+learning_rate: 3e-4
+num_train_epochs: 3
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+
 bf16: true
-output_dir: ./output/qwen7b-lora-you
+ddp_timeout: 18000
+logging_steps: 10
+save_steps: 500
+output_dir: saves/qwen1_5_7b/lora/sft
 ```
 
-#### 启动训练（多卡）：
+### 2. 启动训练（自动多卡，无需手动 torchrun）
+
 ```bash
-torchrun --nproc_per_node=2 src/train.py --config train_lora.yaml
+CUDA_VISIBLE_DEVICES=0,1 llamafactory-cli train examples/train_lora/qwen1_5_7b_lora_sft.yaml
 ```
 
-> ⏱️ 预计时间：1 万条数据 ≈ 1~2 小时
+> ✅ LLaMA-Factory 内部自动调用 `torchrun`，你只需指定 GPU 即可。  
+> 💡 显存占用：~28GB/卡（V100 32GB 足够）
 
 ---
 
-### 🚀 阶段 4：合并模型 & 本地部署 API
-> 目标：把训练好的 LoRA 权重合并到主模型，并启动服务。
+## 🚀 阶段 4：合并 LoRA + 本地 API 部署
 
-#### 合并权重：
-```bash
-python src/export_model.py \
-    --model_name_or_path ./models/Qwen1.5-7B-Chat \
-    --adapter_name_or_path ./output/qwen7b-lora-you \
-    --export_dir ./models/qwen7b-you-finetuned
+### 1. 合并 LoRA 到完整模型
+
+> ⚠️ 注意：合并时**不能使用量化模型**，必须用原始 BF16 模型。
+
+创建 `examples/merge_lora/qwen1_5_7b_lora_sft.yaml`：
+```yaml
+model_name_or_path: qwen/Qwen1.5-7B-Chat
+adapter_name_or_path: saves/qwen1_5_7b/lora/sft
+template: qwen
+export_dir: models/qwen1_5_7b_finetuned
+export_size: 2  # 分片保存（可选）
+export_device: cpu  # 节省 GPU 显存
 ```
 
-#### 启动高性能 API（用 vLLM）：
+执行合并：
 ```bash
+llamafactory-cli export examples/merge_lora/qwen1_5_7b_lora_sft.yaml
+```
+
+输出目录：`models/qwen1_5_7b_finetuned/`（含完整 `pytorch_model.bin`）
+
+---
+
+### 2. 启动 OpenAI 兼容 API（使用 vLLM，高性能）
+
+```bash
+# 安装 vLLM（如未安装）
 pip install vllm
+
+# 启动服务（自动使用 2 张 V100）
 python -m vllm.entrypoints.openai.api_server \
-    --model ./models/qwen7b-you-finetuned \
+    --model ./models/qwen1_5_7b_finetuned \
     --tensor-parallel-size 2 \
-    --port 8000
+    --port 8000 \
+    --dtype bfloat16
 ```
 
-现在你可以通过 **OpenAI 兼容接口** 调用你的私有模型：
+> ✅ 支持并发、流式输出、OpenAI 标准接口
+
+### 3. 测试调用（Python）
+
 ```python
 from openai import OpenAI
 client = OpenAI(base_url="http://localhost:8000/v1", api_key="none")
 resp = client.chat.completions.create(
-    model="qwen7b",
-    messages=[{"role": "user", "content": "你还记得我高考那天吗？"}]
+    model="qwen1.5-7b-finetuned",
+    messages=[{"role": "user", "content": "你还记得我们第一次见面吗？"}],
+    temperature=0.7,
+    max_tokens=256
 )
 print(resp.choices[0].message.content)
 ```
 
 ---
 
-### 🌐 阶段 5（可选）：加 Web 界面 or RAG 增强
-- **加 Web 聊天界面**：用 Gradio 快速搭建
-  ```python
-  # demo.py
-  import gradio as gr
-  # 调用 vLLM API 或直接加载模型
-  gr.ChatInterface(fn=predict).launch(server_name="0.0.0.0", server_port=7860)
-  ```
-- **加 RAG（检索增强）**：把未用于训练的聊天记录存入 Chroma，让模型能“查历史”
+## 🌐 阶段 5（可选扩展）：Web 界面 or RAG
+
+### 🔹 快速 Web 聊天界面（Gradio）
+```python
+# web_demo.py
+import gradio as gr
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:8000/v1", api_key="none")
+
+def predict(message, history):
+    messages = [{"role": "user", "content": msg} for msg, _ in history]
+    messages.append({"role": "user", "content": message})
+    resp = client.chat.completions.create(model="qwen1.5-7b-finetuned", messages=messages)
+    return resp.choices[0].message.content
+
+gr.ChatInterface(predict).launch(server_name="0.0.0.0", server_port=7860)
+```
+
+运行：
+```bash
+python web_demo.py
+```
+访问：`http://<your-server>:7860`
 
 ---
 
-### ✅ 总结：完整流程图
+### 🔹 RAG 增强（检索历史聊天）
+- 将未用于训练的聊天记录（如 `you_to_other.jsonl`）导入 **ChromaDB**
+- 在 API 前加检索模块，拼接上下文
+- 可用 LLaMA-Factory 的 `rag` 模板或自定义 pipeline
+
+---
+
+## ✅ 最终流程图（更新版）
 
 ```
 原始微信JSON
      ↓
-[数据清洗] → other_to_you.jsonl（你已做完✅）
+[数据清洗] → other_to_you.jsonl（✅ 已完成）
      ↓
-[选模型] → Qwen1.5-7B-Chat
+[注册数据集] → data/dataset_info.json + data/my_chat/
      ↓
-[LoRA微调] → 用 LLaMA-Factory 训练（2×V100）
+[启用ModelScope] → export USE_MODELSCOPE_HUB=1
      ↓
-[合并+部署] → vLLM 启动 API（端口 8000）
+[LoRA微调] → llamafactory-cli train ...（2×V100）
      ↓
-[使用] → curl / Python / Web 界面 调用你的“数字分身”
+[合并模型] → llamafactory-cli export ...
+     ↓
+[部署API] → vLLM OpenAI server（端口 8000）
+     ↓
+[使用] → Python / curl / Web / RAG
 ```
 
 ---
 
-### 🔜 下一步建议
+## 📌 关键提醒
 
-你现在可以：
-1. **决定用哪个模型**（我建议 Qwen1.5-7B-Chat）
-2. **在服务器上安装 LLaMA-Factory**
-3. **把 `other_to_you.jsonl` 放到 data 目录，注册数据集**
+1. **不要用 `torchrun` 直接调脚本**：LLaMA-Factory 推荐使用 `llamafactory-cli`，它已封装 DDP、DeepSpeed、Ray 等后端。
+2. **ModelScope 优先**：国内下载快，避免 HF 网络问题。
+3. **LoRA 合并必须用原始模型**：不能是量化版（如 GPTQ/AWQ）。
+4. **V100 不支持 FlashAttention-2**：训练时请关闭 `flash_attn`（默认已适配）。
 
-如果你需要，我可以：
-- 提供完整的 `train_lora.yaml` 配置
-- 写好 Gradio 前端代码
-- 帮你写一键部署脚本
+---
 
-随时告诉我你准备进入哪一步！
+需要我为你生成：
+- 完整的 `qwen1_5_7b_lora_sft.yaml`？
+- 一键训练+合并+部署脚本？
+- Gradio 前端 + RAG 示例？
+
+随时告诉我！你现在可以安全进入 **阶段 2（环境准备）** 了。

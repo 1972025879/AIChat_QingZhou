@@ -1,0 +1,11 @@
+### Model
+model_name_or_path: /home/4T/wuhao_zjc/ab_new_document/AIChat_QingZhou/LLaMA-Factory/models/qwen/Qwen1.5-7B-Chat
+template: qwen
+
+### Inference Parameters
+max_new_tokens: 512
+temperature: 0.7
+top_p: 0.9
+do_sample: true
+repetition_penalty: 1.05
+infer_backend: huggingface

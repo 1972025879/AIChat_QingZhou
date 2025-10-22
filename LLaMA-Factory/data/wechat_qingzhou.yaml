@@ -1,0 +1,5 @@
+file_name: /home/4T/wuhao_zjc/ab_new_document/AIChat_QingZhou/Dataset/json/wxid_wg6cp8uh982s22/test.jsonl
+format: alpaca
+columns:
+  input: input
+  output: output

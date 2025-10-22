@@ -1,0 +1,15 @@
+### Model
+model_name_or_path: /home/4T/wuhao_zjc/ab_new_document/AIChat_QingZhou/LLaMA-Factory/models/qwen/Qwen1.5-7B-Chat
+adapter_name_or_path: saves/qwen1_5_7b_lora_qingzhou
+template: qwen
+finetuning_type: lora
+
+### Inference Parameters
+max_new_tokens: 512
+temperature: 0.7
+top_p: 0.8
+do_sample: true
+repetition_penalty: 1.05
+
+# 可选：若需使用 vLLM 后端（需安装 vllm），设为 vllm；否则默认为 huggingface
+infer_backend: huggingface

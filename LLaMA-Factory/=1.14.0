@@ -1,0 +1,59 @@
+Looking in indexes: https://pypi.tuna.tsinghua.edu.cn/simple
+Collecting modelscope
+  Downloading https://pypi.tuna.tsinghua.edu.cn/packages/bb/a8/26bda5fdbcb9ad18c52d81961520b3b55bc082969a46dc8b18495ef7726b/modelscope-1.31.0-py3-none-any.whl (5.9 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.9/5.9 MB 51.1 MB/s  0:00:00
+Collecting filelock (from modelscope)
+  Using cached https://pypi.tuna.tsinghua.edu.cn/packages/42/14/42b2651a2f46b022ccd948bca9f2d5af0fd8929c4eec235b8d6d844fbe67/filelock-3.19.1-py3-none-any.whl (15 kB)
+Collecting requests>=2.25 (from modelscope)
+  Downloading https://pypi.tuna.tsinghua.edu.cn/packages/1e/db/4254e3eabe8020b458f1a747140d32277ec7a271daf1d235b70dc0b4e6e3/requests-2.32.5-py3-none-any.whl (64 kB)
+Collecting setuptools (from modelscope)
+  Using cached https://pypi.tuna.tsinghua.edu.cn/packages/a3/dc/17031897dae0efacfea57dfd3a82fdd2a2aeb58e0ff71b77b87e44edc772/setuptools-80.9.0-py3-none-any.whl (1.2 MB)
+Collecting tqdm>=4.64.0 (from modelscope)
+  Downloading https://pypi.tuna.tsinghua.edu.cn/packages/d0/30/dc54f88dd4a2b5dc8a0279bdd7270e735851848b762aeb1c1184ed1f6b14/tqdm-4.67.1-py3-none-any.whl (78 kB)
+Collecting urllib3>=1.26 (from modelscope)
+  Downloading https://pypi.tuna.tsinghua.edu.cn/packages/a7/c2/fe1e52489ae3122415c51f387e221dd0773709bad6c6cdaa599e8a2c5185/urllib3-2.5.0-py3-none-any.whl (129 kB)
+Collecting charset_normalizer<4,>=2 (from requests>=2.25->modelscope)
+  Using cached https://pypi.tuna.tsinghua.edu.cn/packages/dd/21/0274deb1cc0632cd587a9a0ec6b4674d9108e461cb4cd40d457adaeb0564/charset_normalizer-3.4.4-cp39-cp39-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (153 kB)
+Collecting idna<4,>=2.5 (from requests>=2.25->modelscope)
+  Using cached https://pypi.tuna.tsinghua.edu.cn/packages/0e/61/66938bbb5fc52dbdf84594873d5b51fb1f7c7794e9c0f5bd885f30bc507b/idna-3.11-py3-none-any.whl (71 kB)
+Collecting certifi>=2017.4.17 (from requests>=2.25->modelscope)
+  Using cached https://pypi.tuna.tsinghua.edu.cn/packages/e4/37/af0d2ef3967ac0d6113837b44a4f0bfe1328c2b9763bd5b1744520e5cfed/certifi-2025.10.5-py3-none-any.whl (163 kB)
+Installing collected packages: urllib3, tqdm, setuptools, idna, filelock, charset_normalizer, certifi, requests, modelscope
+  Attempting uninstall: urllib3
+    Found existing installation: urllib3 2.5.0
+    Uninstalling urllib3-2.5.0:
+      Successfully uninstalled urllib3-2.5.0
+  Attempting uninstall: tqdm
+    Found existing installation: tqdm 4.67.1
+    Uninstalling tqdm-4.67.1:
+      Successfully uninstalled tqdm-4.67.1
+  Attempting uninstall: setuptools
+    Found existing installation: setuptools 80.9.0
+    Uninstalling setuptools-80.9.0:
+      Successfully uninstalled setuptools-80.9.0
+  Attempting uninstall: idna
+    Found existing installation: idna 3.11
+    Uninstalling idna-3.11:
+      Successfully uninstalled idna-3.11
+  Attempting uninstall: filelock
+    Found existing installation: filelock 3.19.1
+    Uninstalling filelock-3.19.1:
+      Successfully uninstalled filelock-3.19.1
+  Attempting uninstall: charset_normalizer
+    Found existing installation: charset-normalizer 3.4.4
+    Uninstalling charset-normalizer-3.4.4:
+      Successfully uninstalled charset-normalizer-3.4.4
+  Attempting uninstall: certifi
+    Found existing installation: certifi 2025.10.5
+    Uninstalling certifi-2025.10.5:
+      Successfully uninstalled certifi-2025.10.5
+  Attempting uninstall: requests
+    Found existing installation: requests 2.32.5
+    Uninstalling requests-2.32.5:
+      Successfully uninstalled requests-2.32.5
+  Attempting uninstall: modelscope
+    Found existing installation: modelscope 1.12.0
+    Uninstalling modelscope-1.12.0:
+      Successfully uninstalled modelscope-1.12.0
+
+Successfully installed certifi-2025.10.5 charset_normalizer-3.4.4 filelock-3.19.1 idna-3.11 modelscope-1.31.0 requests-2.32.5 setuptools-80.9.0 tqdm-4.67.1 urllib3-2.5.0
